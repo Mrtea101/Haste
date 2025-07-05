@@ -118,13 +118,7 @@ namespace HasteEditor {
 			ImGui::DockBuilderAddNode(m_DockspaceID, ImGuiDockNodeFlags_DockSpace);
 			ImGui::DockBuilderSetNodeSize(m_DockspaceID, ImGui::GetWindowSize());
 
-			//// Outliner panel
-			//ImGui::DockBuilderDockWindow(Panels[0]->m_Name.c_str(),
-			//	ImGui::DockBuilderSplitNode(m_DockspaceID, ImGuiDir_Left, 0.25f, nullptr, &m_DockspaceID));
-			//
-			//// Log Output panel
-			//ImGui::DockBuilderDockWindow(Panels[1]->m_Name.c_str(),
-			//	ImGui::DockBuilderSplitNode(m_DockspaceID, ImGuiDir_Down, 0.25f, nullptr, &m_DockspaceID));
+			// Default panels layout here
 
 			ImGui::DockBuilderFinish(m_DockspaceID);
 

@@ -31,7 +31,7 @@ Application* Core::CreateApplication(ApplicationCommandLineArgs args)
 	ApplicationSpecification spec
 	{
 		.CommandLineArgs = args,
-		.Name = "Make Haste",
+		.Name = "Haste Editor",
 		.UserSavedDir = "Saved",
 		.ImGuiIniFile = spec.UserSavedDir + "/UI.ini",
 		.LogFile = spec.UserSavedDir + "/Log.txt",
