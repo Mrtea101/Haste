@@ -54,4 +54,6 @@
 #include "Assert.h"
 #include "Debug/Instrumentor.h"
 
+namespace Haste {}
 using namespace Core;
+using namespace Haste;

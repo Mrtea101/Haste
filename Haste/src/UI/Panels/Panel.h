@@ -7,7 +7,7 @@
 #include <imgui_internal.h>
 
 
-namespace HasteEditor
+namespace Haste
 {
 	class Panel
 	{

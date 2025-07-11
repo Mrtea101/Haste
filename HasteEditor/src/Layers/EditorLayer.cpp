@@ -1,10 +1,14 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "EditorLayer.h"
 
-#include "Panels/ViewportPanel.h"
+#include "Panels/EditorViewportPanel.h"
+#include "Panels/LevelOutlinerPanel.h"
 
 #include <Core/Application.h>
 #include <Core/Input/Input.h>
 #include <Core/Platform/PlatformUtils.h>
+#include <Engine/Renderer/Renderer.h>
+#include <Project/Project.h>
 #include <imgui.h>
 
 
@@ -34,7 +38,24 @@ namespace HasteEditor {
 			
 		}
 
-		Panels.push_back(CreateRef<ViewportPanel>());
+#if WITH_PROJECT
+		if (!Project::Load(std::filesystem::current_path() / "TestProject.hasteproj"))
+		{
+			auto prj = Project::New();
+			auto& cfg = prj->GetConfig();
+			cfg.Name = "TestProject";
+			cfg.ProjectDirectory = std::filesystem::current_path();
+			Project::SaveActive();
+			CORE_INFO("Created new project file");
+		}
+#endif
+
+		m_EditorLevel = CreateRef<DemoLevel>();
+		m_ActiveLevel = m_EditorLevel;
+		Renderer::SetLineWidth(4.0f);
+
+		m_Panels.push_back(CreateScope<EditorViewportPanel>());
+		m_Panels.push_back(CreateScope<LevelOutlinerPanel>(m_ActiveLevel));
 	}
 
 	void EditorLayer::OnDetach()
@@ -46,8 +67,26 @@ namespace HasteEditor {
 	{
 		CORE_PROFILE_FUNCTION();
 
-		for (auto panel : Panels)
+		for (auto& panel : m_Panels)
 			panel->OnUpdate(ts);
+
+		if (EditorViewportPanel* viewport = FindPanelByClass<EditorViewportPanel>())
+		{
+			switch (m_LevelState)
+			{
+			case LevelState::Edit:
+				m_ActiveLevel->OnUpdateEditor(ts, viewport->GetCamera());
+				break;
+			case LevelState::Simulate:
+				m_ActiveLevel->OnUpdateSimulation(ts, viewport->GetCamera());
+				break;
+			case LevelState::Play:
+				m_ActiveLevel->OnUpdateRuntime(ts);
+				break;
+			}
+
+			viewport->PostUpdate();
+		}
 	}
 
 	void EditorLayer::OnUIRender()
@@ -89,7 +128,7 @@ namespace HasteEditor {
 		ImGui::DockSpace(m_DockspaceID);
 		style.WindowMinSize.x = minWinSizeX;
 		
-		//ImGui::ShowDemoWindow();
+		OnRenderMenuBar();
 		OnRenderPanels();
 		
 		ImGui::End();
@@ -97,7 +136,7 @@ namespace HasteEditor {
 
 	void EditorLayer::OnEvent(Event& e)
 	{
-		for (auto panel : Panels)
+		for (auto& panel : m_Panels)
 		{
 			panel->OnEvent(e);
 			if (e.Handled) return;
@@ -114,48 +153,123 @@ namespace HasteEditor {
 		{
 			m_bNeedSetupDefaultLayout = false;
 
+			for (auto& panel : m_Panels)
+				panel->m_bNeedSetupDefaultLayout = true;
+
 			ImGui::DockBuilderRemoveNode(m_DockspaceID);
 			ImGui::DockBuilderAddNode(m_DockspaceID, ImGuiDockNodeFlags_DockSpace);
 			ImGui::DockBuilderSetNodeSize(m_DockspaceID, ImGui::GetWindowSize());
 
-			// Default panels layout here
+			auto outliner = FindPanelByClass<LevelOutlinerPanel>();
+			outliner->m_bNeedSetupDefaultLayout = false;
+			auto outlinerDockId = ImGui::DockBuilderSplitNode(m_DockspaceID, ImGuiDir_Right, 0.25f, nullptr, &m_DockspaceID);
+			ImGui::DockBuilderDockWindow(outliner->m_Name.c_str(), outlinerDockId);
+			ImGui::DockBuilderDockWindow("Properties", // part of the outliner
+				ImGui::DockBuilderSplitNode(outlinerDockId, ImGuiDir_Down, 0.5f, nullptr, &outlinerDockId));
 
 			ImGui::DockBuilderFinish(m_DockspaceID);
-
-			for (uint16_t i = 0; i < Panels.size(); i++)
-				Panels[i]->m_bNeedSetupDefaultLayout = true;
 		}
 
 		bool bUnsavedPanelPopupShown = false;
-		for (uint16_t i = 0; i < Panels.size(); i++)
+		for (uint16_t i = 0; i < m_Panels.size(); i++)
 		{
 			// Close panels that want to
-			if (Panels[i]->m_bWantsToClose && !bUnsavedPanelPopupShown) // only show for one panel at a time
+			if (m_Panels[i]->m_bWantsToClose && !bUnsavedPanelPopupShown) // only show for one panel at a time
 			{
 				if (!bUnsavedPanelPopupShown) // skip if another unsaved panel is trying to close
 				{
-					if (Panels[i]->m_bHasUnsavedData) // skip if this panel is unsaved
+					if (m_Panels[i]->m_bHasUnsavedData) // skip if this panel is unsaved
 						bUnsavedPanelPopupShown = true;
-					else if (Panels[i]->OnClosed()) // file closed successfully, remove the panel
+					else if (m_Panels[i]->OnClosed()) // file closed successfully, remove the panel
 					{
 						bUnsavedPanelPopupShown = false;
-						Panels.erase(Panels.begin() + i);
+						m_Panels.erase(m_Panels.begin() + i);
 						i--;
+						continue;
 					}
 				}
 			}
 
-			if (Panels[i]->m_bShouldRender)
+			if (m_Panels[i]->m_bShouldRender)
 			{
-				if (Panels[i]->m_bNeedSetupDefaultLayout)
+				if (m_Panels[i]->m_bNeedSetupDefaultLayout)
 				{
+					m_Panels[i]->m_bNeedSetupDefaultLayout = false;
 					ImGui::SetNextWindowDockID(m_DockspaceID);
-					Panels[i]->m_bNeedSetupDefaultLayout = false;
 				}
 
-				Panels[i]->OnUIRender();
+				m_Panels[i]->OnUIRender();
 			}
 		}
+
+	}
+
+	void EditorLayer::OnRenderMenuBar()
+	{
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem("Exit", "Alt+F4"))
+					Application::Get().Close();
+
+				ImGui::EndMenu();
+			}
+
+#if WITH_PROJECT
+			if (ImGui::BeginMenu("Project"))
+			{
+				if (ImGui::MenuItem("Save", "Ctrl+S"))
+					Project::SaveActive();
+
+				ImGui::EndMenu();
+			}
+#endif
+
+#ifdef IS_DEBUG
+			if (ImGui::BeginMenu("Debug"))
+			{
+				if (ImGui::MenuItem("Test")) // For quick testing
+				{
+				}
+
+				ImGui::EndMenu();
+			}
+#endif
+
+			ImGui::BeginHorizontal("EditorInfoBar",
+				ImVec2(ImGui::GetIO().DisplaySize.x - ImGui::GetCursorPosX(), ImGui::GetItemRectSize().y));
+
+			//if (m_ActiveLevel != m_EditorLevel)
+			{
+				ImGui::Spring();
+				ImGui::TextUnformatted(m_ActiveLevel->GetName().c_str());
+			}
+
+			ImGui::Spring();
+			ImGui::Text("%.2f fps / %.3f ms", ImGui::GetIO().Framerate, 1 / ImGui::GetIO().Framerate);
+#if WITH_PROJECT
+			ImGui::Separator();
+			ImGui::TextUnformatted(Project::GetActive()->GetConfig().Name.c_str());
+#endif
+
+			ImGui::Spring(0.f, 8.f);
+			ImGui::EndHorizontal();
+
+			ImGui::EndMenuBar();
+		}
+	}
+
+	template<typename T>
+	T* EditorLayer::FindPanelByClass()
+	{
+		static_assert(std::is_base_of<Panel, T>(), "FindPanelByClass called with non-panel template param");
+		for (auto& panel : m_Panels)
+		{
+			if (T* panelCasted = dynamic_cast<T*>(panel.get()))
+				return panelCasted;
+		}
+		return nullptr;
 	}
 
 	bool EditorLayer::OnKeyPressed(KeyPressedEvent& e)

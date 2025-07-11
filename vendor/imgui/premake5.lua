@@ -1,6 +1,8 @@
 project "imgui"
 	kind "StaticLib"
 	language "C++"
+	cppdialect "C++23"
+	staticruntime "On"
 
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin/intermediate/" .. outputdir .. "/%{prj.name}")
@@ -22,19 +24,15 @@ project "imgui"
 
 	filter "system:windows"
 		systemversion "latest"
-		cppdialect "C++23"
-		staticruntime "On"
 
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
-		cppdialect "C++23"
-		staticruntime "On"
 
-	filter "configurations:Debug"
+	filter "configurations:Debug*"
 		runtime "Debug"
 		symbols "on"
 
-	filter "configurations:Release"
+	filter "configurations:Release*"
 		runtime "Release"
 		optimize "on"

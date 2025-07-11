@@ -1,5 +1,8 @@
-#include "Core/Application.h"
+
 #include "Layers/EditorLayer.h"
+
+#include <Core/Application.h>
+#include <Project/Project.h>
 #include <imgui.h>
 
 using namespace Core;
@@ -14,11 +17,13 @@ namespace HasteEditor {
 		{
 			ImGuiIO& io = ImGui::GetIO();
 			const float fontSize = 32.f;
-			io.FontDefault = io.Fonts->AddFontFromFileTTF("Content/Fonts/OpenSans/OpenSans-Regular.ttf", fontSize);
+			io.FontDefault = io.Fonts->AddFontFromFileTTF(
+				Project::GetEngineAsset("Fonts/OpenSans/OpenSans-Regular.ttf").string().c_str(), fontSize);
 			io.FontGlobalScale = 0.66666f; // allows non-blurred upscaling (up to 1.0)
 			io.ConfigWindowsMoveFromTitleBarOnly = true;
 
 			GetWindow().SetVSync(false);
+			GetWindow().SetDarkMode(true, false);
 
 			GetUILayer()->BlockEvents(false);
 			PushLayer(new EditorLayer());
@@ -26,6 +31,7 @@ namespace HasteEditor {
 	};
 }
 
+#if !WITH_PROJECT
 Application* Core::CreateApplication(ApplicationCommandLineArgs args)
 {
 	ApplicationSpecification spec
@@ -39,3 +45,4 @@ Application* Core::CreateApplication(ApplicationCommandLineArgs args)
 
 	return new HasteEditor::HasteEditorApp(spec);
 }
+#endif

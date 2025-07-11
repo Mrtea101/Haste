@@ -4,6 +4,7 @@
 #include "API/Shader.h"
 #include "API/UniformBuffer.h"
 #include "RenderCommand.h"
+#include "Project/Project.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -261,11 +262,11 @@ namespace Core {
 		for (uint32_t i = 0; i < s_Data.MaxTextureSlots; i++)
 			samplers[i] = i;
 
-		s_Data.QuadShader = Shader::Create("Content/Shaders/Renderer_Quad.glsl");
-		s_Data.TriShader = Shader::Create("Content/Shaders/Renderer_Tri.glsl");
-		s_Data.CircleShader = Shader::Create("Content/Shaders/Renderer_Circle.glsl");
-		s_Data.LineShader = Shader::Create("Content/Shaders/Renderer_Line.glsl");
-		s_Data.TextShader = Shader::Create("Content/Shaders/Renderer_Text.glsl");
+		s_Data.QuadShader = Shader::Create(Project::GetEngineAsset("Shaders/Renderer_Quad.glsl").string());
+		s_Data.TriShader = Shader::Create(Project::GetEngineAsset("Shaders/Renderer_Tri.glsl").string());
+		s_Data.CircleShader = Shader::Create(Project::GetEngineAsset("Shaders/Renderer_Circle.glsl").string());
+		s_Data.LineShader = Shader::Create(Project::GetEngineAsset("Shaders/Renderer_Line.glsl").string());
+		s_Data.TextShader = Shader::Create(Project::GetEngineAsset("Shaders/Renderer_Text.glsl").string());
 
 		s_Data.WhiteTexture = Texture2D::Create(TextureSpecification());
 		uint32_t whiteTextureData = 0xffffffff;
@@ -282,11 +283,13 @@ namespace Core {
 		delete[] s_Data.QuadVertexBufferBase;
 	}
 
-	void Renderer::BeginScene(const Camera& camera)
+	void Renderer::BeginScene(const Camera& camera, const glm::mat4& transform)
 	{
 		CORE_PROFILE_FUNCTION();
 
-		s_Data.CameraBuffer.ViewProjection = camera.GetViewProjection();
+		s_Data.CameraBuffer.ViewProjection = transform == glm::mat4(1.f)
+			? camera.GetViewProjection()
+			: camera.GetProjection() * glm::inverse(transform);
 		s_Data.CameraUniformBuffer->SetData(&s_Data.CameraBuffer, sizeof(RendererData::CameraData));
 
 		StartBatch();

@@ -15,7 +15,7 @@ namespace Core {
 		static void Init();
 		static void Shutdown();
 
-		static void BeginScene(const Camera& camera);
+		static void BeginScene(const Camera& camera, const glm::mat4& transform = glm::mat4(1.f));
 		static void EndScene();
 		static void Flush();
 

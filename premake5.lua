@@ -17,6 +17,7 @@ group "Dependencies"
 	include "vendor/glfw"
 	include "vendor/glad"
 	include "vendor/imgui"
+	include "vendor/yaml-cpp"
 group ""
 
 include "Haste"

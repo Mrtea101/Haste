@@ -47,23 +47,39 @@ inline OStream& operator<<(OStream& os, glm::qua<T, Q> quaternion)
 	return os << glm::to_string(quaternion);
 }
 
+// For compile-time
 template <typename... Args>
-inline std::string FormatString(const char* fmt, const Args & ... args)
+inline std::string FormatString(fmt::format_string<Args...> fmt, Args&&... args)
 {
-	if (!sizeof...(Args)) return std::string(fmt);
-	fmt::memory_buffer buf;
-	fmt::format_to(buf, fmt, args...);
-	return std::string(buf.data(), buf.size());
+	if constexpr (sizeof...(Args) == 0) return std::string(fmt);
+	return fmt::format(fmt, std::forward<Args>(args)...);
 }
 
+// For runtime
 template <typename... Args>
-inline std::string FormatString(const std::string& fmt, const Args & ... args)
+inline std::string FormatString(const std::string& fmt, Args&&... args)
 {
-	if (!sizeof...(Args)) return fmt;
-	fmt::memory_buffer buf;
-	fmt::format_to(buf, fmt.c_str(), args...);
-	return std::string(buf.data(), buf.size());
+	if constexpr (sizeof...(Args) == 0) return std::string(fmt);
+	return fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
 }
+
+//template <typename... Args>
+//inline std::string FormatString(const char* fmt, const Args & ... args)
+//{
+//	if (!sizeof...(Args)) return std::string(fmt);
+//	fmt::memory_buffer buf;
+//	fmt::format_to(buf, fmt, args...);
+//	return std::string(buf.data(), buf.size());
+//}
+//
+//template <typename... Args>
+//inline std::string FormatString(const std::string& fmt, const Args & ... args)
+//{
+//	if (!sizeof...(Args)) return fmt;
+//	fmt::memory_buffer buf;
+//	fmt::format_to(buf, fmt.c_str(), args...);
+//	return std::string(buf.data(), buf.size());
+//}
 
 // Core log macros
 #define CORE_TRACE(...)    ::Core::Log::GetLogger()->trace(__VA_ARGS__)

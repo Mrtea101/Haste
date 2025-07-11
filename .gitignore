@@ -45,3 +45,6 @@
 #*.exe
 *.out
 *.app
+
+HasteEditor/Saved/
+Projects/TestProject/Saved/

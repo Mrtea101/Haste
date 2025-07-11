@@ -7,7 +7,7 @@ project "HasteEditor"
 
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin/intermediate/" .. outputdir .. "/%{prj.name}")
-
+	
 	files
 	{
 		"src/**.h",
@@ -16,20 +16,20 @@ project "HasteEditor"
 
 	includedirs
 	{
-		"%{prj.location}/src",
-		"%{wks.location}/Haste/src",
-		"%{wks.location}/vendor/glfw/include",
-		"%{wks.location}/vendor/glad/include",
-		"%{wks.location}/vendor/spdlog/include",
-		"%{wks.location}/vendor/glm",
-		"%{wks.location}/vendor/stb",
-		"%{wks.location}/vendor/imgui",
+		"src",
+		"../Haste/src",
+		"../vendor/glfw/include",
+		"../vendor/glad/include",
+		"../vendor/spdlog/include",
+		"../vendor/yaml-cpp/include",
+		"../vendor/glm",
+		"../vendor/stb",
+		"../vendor/imgui",
 	}
 
-	links
-	{
-		"Haste",
-	}
+	links { "Haste" }
+	
+	defines { "WITH_EDITOR" }
 	
 	filter "system:windows"
 		systemversion "latest"

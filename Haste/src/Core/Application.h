@@ -65,8 +65,8 @@ namespace Core {
 		void SubmitToMainThread(const std::function<void()>& function);
 
 		const Timer& GetRunTimer() const { return m_RunTimer; }
-	private:
 		void Run();
+	private:
 		bool OnWindowClose(WindowCloseEvent& e);
 		bool OnWindowResize(WindowResizeEvent& e);
 

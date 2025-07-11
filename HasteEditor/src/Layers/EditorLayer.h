@@ -2,13 +2,19 @@
 
 #include <Core/Core.h>
 #include <Core/UI/Layer.h>
-#include <Core/UI/Panel.h>
+#include <UI/Panels/Panel.h>
 #include <Core/Events/KeyEvent.h>
 #include <Core/Events/MouseEvent.h>
+#include <Engine/Level/Level.h>
 
 namespace HasteEditor {
 
-	class EditorLayer : public Core::Layer
+	enum LevelState
+	{
+		Edit = 0, Play = 1, Simulate = 2
+	};
+
+	class EditorLayer : public Layer
 	{
 	public:
 		EditorLayer();
@@ -22,11 +28,13 @@ namespace HasteEditor {
 		void OnEvent(Event& e) override;
 
 		void OnRenderPanels();
+		void OnRenderMenuBar();
+
+		template<typename T>
+		T* FindPanelByClass();
 
 		static EditorLayer* Get() { return m_Inst; };
 		unsigned int m_DockspaceID = 0;
-
-		std::vector<Ref<Panel>> Panels;
 
 	private:
 		bool OnKeyPressed(KeyPressedEvent& e);
@@ -34,5 +42,12 @@ namespace HasteEditor {
 
 		static EditorLayer* m_Inst;
 		bool m_bNeedSetupDefaultLayout = false;
+
+		std::vector<Scope<Panel>> m_Panels;
+
+		Ref<Level> m_EditorLevel;
+		Ref<Level> m_ActiveLevel;
+
+		LevelState m_LevelState = LevelState::Edit;
 	};
 }

@@ -10,23 +10,22 @@ project "Haste"
 
 	files
 	{
-		"%{prj.location}/src/**.h",
-		"%{prj.location}/src/**.cpp",
-		"%{wks.location}/vendor/glm/glm/**.hpp",
-		"%{wks.location}/vendor/glm/glm/**.inl",
-		"%{wks.location}/vendor/glm/glm/**.inl",
-		"%{wks.location}/vendor/stb/stb_image.h",
+		"src/**.h",
+		"src/**.cpp",
+		"../vendor/glm/glm/**.hpp",
+		"../vendor/glm/glm/**.inl",
 	}
 
 	includedirs
 	{
-		"%{prj.location}/src",
-		"%{wks.location}/vendor/glfw/include",
-		"%{wks.location}/vendor/glad/include",
-		"%{wks.location}/vendor/spdlog/include",
-		"%{wks.location}/vendor/glm",
-		"%{wks.location}/vendor/stb",
-		"%{wks.location}/vendor/imgui",
+		"src",
+		"../vendor/glfw/include",
+		"../vendor/glad/include",
+		"../vendor/spdlog/include",
+		"../vendor/yaml-cpp/include",
+		"../vendor/glm",
+		"../vendor/stb",
+		"../vendor/imgui",
 	}
 
 	links
@@ -35,11 +34,13 @@ project "Haste"
 		"glfw",
 		"glad",
 		"imgui",
+		"yaml-cpp",
 	}
 
 	defines
 	{
 		"GLFW_INCLUDE_NONE",
+		"WITH_EDITOR",
 	}
 	
 	filter "system:windows"
@@ -64,4 +65,3 @@ project "Haste"
 		runtime "Release"
 		optimize "On"
 		symbols "Off"
-		kind "WindowedApp"
