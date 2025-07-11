@@ -46,5 +46,6 @@
 *.out
 *.app
 
+!vendor/premake/bin/
 HasteEditor/Saved/
 Projects/TestProject/Saved/
